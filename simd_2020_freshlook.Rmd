@@ -1,0 +1,105 @@
+---
+title: "SIMD 2020 new plots"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    code_folding: hide
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Intro
+
+Look at some variables that usually get ignored
+
+###Packages
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggthemes)
+library(readxl)
+library(janitor)
+library(data.table)
+library(scales)
+```
+
+
+### Data
+
+From the SG SIMD2020 webpage
+
+```{r}
+simd <- read_excel("raw_data/SIMD_2020_Datazone_lookup_tool.xlsx", sheet = 3)
+```
+
+```{r}
+simd %>% 
+  select(IZname, LAname,SIMD2020_Access_Domain_Rank,
+         SIMD2020_Crime_Domain_Rank,SIMD2020_Decile,
+         SIMD2020_Income_Domain_Rank, SIMD2020_Employment_Domain_Rank,
+         SIMD2020_Education_Domain_Rank, SIMD2020_Health_Domain_Rank,
+         SIMD2020_Housing_Domain_Rank, SIMD2020_Income_Domain_Rank) %>% 
+  rename(Access = SIMD2020_Access_Domain_Rank,
+         Crime = SIMD2020_Crime_Domain_Rank,
+         Decile = SIMD2020_Decile,
+         Income = SIMD2020_Income_Domain_Rank, 
+         Employment = SIMD2020_Employment_Domain_Rank,
+         Education = SIMD2020_Education_Domain_Rank,
+         Health = SIMD2020_Health_Domain_Rank,
+         Housing = SIMD2020_Housing_Domain_Rank, 
+         Income = SIMD2020_Income_Domain_Rank) %>% 
+  tidyr::gather(key = "metric", value = "rank",-c(IZname,LAname, Decile)) -> ranked
+
+ranked <- ranked %>% 
+  mutate(rescaled_rank = rescale(rank))
+```
+
+
+
+
+
+
+
+
+
+## Plot
+
+```{r, fig.width=20, fig.height=18}
+ranked %>% 
+   ggplot(aes(metric,y = rescaled_rank)) +
+  geom_point(aes(colour = Decile), position = position_jitter(),alpha = 0.4) +
+ scale_colour_viridis_c(option = "plasma") +
+  facet_wrap(~ LAname, ncol = 6) + 
+  theme_minimal() + 
+  ggExtra::rotateTextX() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_blank()) +
+  
+  labs(title = "SIMD  domain variables by IZname",
+        subtitle = " grouped by Local Authority",
+       x = "Domain name",
+       y = "",
+       fill = "SIMD decile", 
+     caption = "Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") 
+
+```
+
+
+
+```{r}
+ggsave("plots/simd_domain_plot.png", width = 20, height = 18)
+```
+
+
+
+## Session Info
+
+```{r}
+devtools::session_info()
+```
+
