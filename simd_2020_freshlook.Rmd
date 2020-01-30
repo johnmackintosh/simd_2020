@@ -185,12 +185,12 @@ ggsave("plots/simd_domain_Highland_IZ.png", width = 20, height = 18)
 ## Gratuitous animation
 
 ```{r}
-ranked %>% 
+anime <- ranked %>% 
    filter(LAname == 'Highland') %>% 
    ggplot(aes(metric,y = rank)) +
   geom_point(aes(colour = rank), 
              position = position_jitter(width = 0.2),
-             alpha = 0.2) +
+             alpha = 0.7) +
   geom_point(aes(group = seq_along(rank))) +
  scale_colour_viridis_c(option = "plasma") +
  facet_wrap(~ IZname, labeller = labeller(groupwrap = label_wrap_gen(25, 
@@ -198,18 +198,25 @@ ranked %>%
   dark_theme_minimal(base_size = 12) +
   ggExtra::rotateTextX() +
   theme(legend.position = "bottom",
-        axis.text.y = element_blank()) +
+        axis.text.y = element_blank())  +
+   transition_reveal(rank) +
+    ease_aes('cubic-in-out') +
   labs(title = " Highland SIMD domains by Intermediate Zone",
         subtitle = "",
        x = "Domain",
        y = "",
        #fill = "SIMD decile", 
-     caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") +
-  transition_reveal(rank)
+     caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/")
   
+
+animate(anime, width = 1400, height = 1000)
 ```
 
 
+
+```{r}
+anim_save(filename = "plots/higland_simd.gif", animation = last_animation())
+```
 
 
 
