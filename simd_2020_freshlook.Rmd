@@ -44,7 +44,7 @@ simd <- read_excel("raw_data/SIMD_2020_Datazone_lookup_tool.xlsx", sheet = 3)
 
 ```{r}
 simd %>% 
-  select(IZname, LAname,SIMD2020_Access_Domain_Rank,
+  select(DZ, DZname,IZname, LAname,SIMD2020_Access_Domain_Rank,
          SIMD2020_Crime_Domain_Rank,SIMD2020_Decile,
          SIMD2020_Income_Domain_Rank, SIMD2020_Employment_Domain_Rank,
          SIMD2020_Education_Domain_Rank, SIMD2020_Health_Domain_Rank,
@@ -58,7 +58,7 @@ simd %>%
          Health = SIMD2020_Health_Domain_Rank,
          Housing = SIMD2020_Housing_Domain_Rank, 
          Income = SIMD2020_Income_Domain_Rank) %>% 
-  tidyr::gather(key = "metric", value = "rank",-c(IZname,LAname, Decile)) -> ranked
+  tidyr::gather(key = "metric", value = "rank",-c(DZ, DZname, IZname, LAname, Decile)) -> ranked
 
 ranked <- ranked %>% 
   mutate(rescaled_rank = rescale(rank))
@@ -77,7 +77,7 @@ ranked %>%
   ggExtra::rotateTextX() +
   theme(legend.position = "bottom",
         axis.text.y = element_blank()) +
-  labs(title = "SIMD 2020 Domains by Intermediate Zone",
+  labs(title = "SIMD 2020 Domains by Data Zone",
         subtitle = "Grouped by Local Authority",
        x = "Domain",
        y = "",
@@ -107,7 +107,7 @@ ranked %>%
   ggExtra::rotateTextX() +
   theme(legend.position = "bottom",
         axis.text.y = element_blank()) +
-  labs(title = "Rescaled SIMD 2020 Domains by Intermediate Zone",
+  labs(title = "Rescaled SIMD 2020 Domains by Data Zone",
         subtitle = "Grouped by Local Authority",
        x = "Domain name",
        y = "",
@@ -136,7 +136,7 @@ ranked %>%
   ggExtra::rotateTextX() +
   theme(legend.position = "bottom",
        axis.text.y = element_blank()) +
-  labs(title = "SIMD 2020 domains by Intermediate Zone",
+  labs(title = "SIMD 2020 domains by Data Zone",
         subtitle = "Grouped by Local Authority",
        x = "Domain",
        y = "",
@@ -182,40 +182,114 @@ ggsave("plots/simd_domain_Highland_IZ.png", width = 20, height = 18)
 
 
 
-## Gratuitous animation
+## General Beeswarm
 
 ```{r}
-anime <- ranked %>% 
-   filter(LAname == 'Highland') %>% 
-   ggplot(aes(metric,y = rank)) +
-  geom_point(aes(colour = rank), 
-             position = position_jitter(width = 0.2),
-             alpha = 0.7) +
-  geom_point(aes(group = seq_along(rank))) +
+ranked %>% 
+  filter(LAname == 'Highland') %>% 
+  ggplot(aes(metric,y = rank, colour = rank)) +
+  geom_beeswarm(alpha = 0.5) +
  scale_colour_viridis_c(option = "plasma") +
- facet_wrap(~ IZname, labeller = labeller(groupwrap = label_wrap_gen(25, 
-                                                          multi_line = TRUE))) +
-  dark_theme_minimal(base_size = 12) +
+  theme_ft_rc(base_size = 12) +
+  #dark_theme_minimal(base_size = 12) +
   ggExtra::rotateTextX() +
   theme(legend.position = "bottom",
-        axis.text.y = element_blank())  +
-   transition_reveal(rank) +
-    ease_aes('cubic-in-out') +
-  labs(title = " Highland SIMD domains by Intermediate Zone",
+        axis.text.y = element_blank()) +
+  labs(title = "Highland SIMD 2020 by domain",
         subtitle = "",
-       x = "Domain",
+       x = "",
        y = "",
-       #fill = "SIMD decile", 
-     caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/")
-  
-
-animate(anime, width = 1400, height = 1000)
+       fill = "SIMD decile", 
+     caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") 
 ```
 
 
 
 ```{r}
-anim_save(filename = "plots/higland_simd.gif", animation = last_animation())
+ggsave("plots/simd_domain_Highland_beeswarm.png", width = 20, height = 18)
+
+```
+
+
+## Local Authority Beeswarm
+```{r}
+ranked %>% 
+  ggplot(aes(metric,y = rank, colour = rank)) +
+  geom_beeswarm(alpha = 0.5) + 
+  scale_colour_viridis_c(option = "plasma") +
+  theme_ft_rc(base_size = 12) +
+  facet_wrap(~ LAname, ncol = 4) + 
+  ggExtra::rotateTextX() +
+  theme(legend.position = "bottom",
+       axis.text.y = element_blank()) +
+  labs(title = "SIMD 2020 domains by Data Zone",
+        subtitle = "Grouped by Local Authority",
+       x = "",
+       y = "",
+       fill = "SIMD decile", 
+       caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") 
+```
+
+```{r}
+ggsave("plots/simd_domain_LA_beeswarm.png", width = 20, height = 18)
+```
+
+
+
+```{r}
+ranked %>% 
+  filter(LAname %in% c('City of Edinburgh', 'Glasgow City')) %>% 
+  ggplot(aes(LAname,y = rank, colour = rank)) +
+  geom_beeswarm(alpha = 0.5) + 
+  scale_colour_viridis_c(option = "plasma") +
+  #scale_color_gradient(low = "orange", high = "blue") +
+  theme_ft_rc(base_size = 12) +
+  facet_wrap(~ metric, nrow = 1) + 
+  ggExtra::rotateTextX() +
+  theme(legend.position = "bottom",
+       axis.text.y = element_blank()) +
+  labs(title = "Scotland's Big 2 - SIMD 2020 by Domain",
+        subtitle = "",
+       x = "",
+       y = "",
+       fill = "SIMD decile", 
+       caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") 
+```
+
+
+```{r}
+ggsave("plots/simd_domain_big2_beeswarm.png", width = 14, height = 8)
+```
+
+
+
+
+## working Age
+
+```{r}
+simd %>% 
+  ggplot(aes(SIMD2020_Quintile,y = Working_Age_Population, 
+             colour = SIMD2020_Employment_Domain_Rank)) +
+  geom_beeswarm(alpha = 0.5) + 
+  scale_colour_viridis_c(option = "plasma") +
+  theme_ft_rc(base_size = 12) +
+  facet_wrap(~ LAname, ncol = 4) + 
+ scale_x_discrete(breaks = c(1,2,3,4,5), labels = c(1,2,3, 4,5), 
+                  limits = c("1", "2", "3", "4","5")) +
+  ggExtra::rotateTextX() +
+  ggExtra::removeGrid() +
+  theme(legend.position = "bottom",
+       axis.text.y = element_blank()) +
+  labs(title = "Working Age Population by SIMD 2020 Quintile",
+        subtitle = "Grouped by Local Authority, scaled by Employment Domain Rank",
+       x = "Quintile",
+       y = "Working Age Population",
+       caption = "@_johnmackintosh \n Data from https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020-data-zone-look-up/") 
+```
+
+
+```{r}
+ggsave("plots/simd_working_age_population.png", width = 20, height = 18)
 ```
 
 
